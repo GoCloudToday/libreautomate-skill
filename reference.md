@@ -207,3 +207,15 @@ Docs referenced but not run here: email (SMTP/IMAP), SFTP/SSH, WMI, services, CO
   app (tree stops at the web canvas), and synthetic `mouse.click` on a JS custom
   visual's cells never registered a selection in the host's edit mode. Don't fight it:
   drive the state through the app's files/config instead, and observe via screenshots.
+
+### 2026-07-23 (la-run.ps1 multi-argument passing via `pwsh -File`)
+
+- Calling `pwsh -File la-run.ps1 -Arguments "a","b"` binds ONE literal string
+  `"a","b"` to the `[string[]]` parameter — `-File` command lines get no PowerShell
+  expression parsing, so array syntax silently flattens and the C# script receives a
+  garbage `args[0]` (symptom: `DirectoryNotFoundException` naming the whole joined
+  list, or earlier a GDI+ "generic error" on `Image.Save`).
+  Fixes: single argument is always safe; for multiple, either hardcode the paths in
+  the generated C# (simplest), or invoke via
+  `pwsh -Command "& 'la-run.ps1' -Name x -Code $c -Arguments 'a','b'"` where the
+  array IS parsed.
