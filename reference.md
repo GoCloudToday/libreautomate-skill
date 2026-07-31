@@ -219,3 +219,24 @@ Docs referenced but not run here: email (SMTP/IMAP), SFTP/SSH, WMI, services, CO
   the generated C# (simplest), or invoke via
   `pwsh -Command "& 'la-run.ps1' -Name x -Code $c -Arguments 'a','b'"` where the
   array IS parsed.
+
+### 2026-07-31 (wnd.find timeout-overload throws where enumeration succeeds; window-relative clicks)
+
+- **`wnd.find(seconds, name, of: "app.exe")` threw NotFoundException for a window
+  the enumeration loop found instantly** (title matched, process matched — the app was
+  a WinForms host whose top window class carries a randomized suffix). When a find
+  keeps failing but you know the window exists, skip the finder and enumerate:
+  `foreach (var v in wnd.getwnd.allWindows(true)) if (v.ProgramName == "app.exe" && v.Name.Like("Title*")) ...`
+  — the loop is also what you already use for the save-prompt scan, so one pattern serves both.
+- **Never reuse absolute click coordinates across app launches**: a tab strip
+  validated at one window geometry/zoom missed after a relaunch (maximized size and
+  canvas zoom differ) — the click landed on the canvas and selected a visual instead
+  of switching tabs. Use window-relative clicks (`mouse.click(w, x, y)`) with
+  coordinates measured from a fresh screenshot of the CURRENT window, and send `Esc`
+  first to clear any accidental selection state.
+- **`wnd.find` waitS sign semantics bite in polling loops**: positive (and the
+  0 = "no wait" form) THROW NotFoundException when absent; only negative waitS
+  returns null. Inside a retry loop, either use negative timeouts or the enumeration
+  pattern — an exception mid-loop skips your remaining dialog handling (here it
+  abandoned a save-prompt click path; the close still succeeded only because the
+  session had no unsaved changes).
