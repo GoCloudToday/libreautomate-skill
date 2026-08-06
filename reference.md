@@ -240,3 +240,20 @@ Docs referenced but not run here: email (SMTP/IMAP), SFTP/SSH, WMI, services, CO
   pattern — an exception mid-loop skips your remaining dialog handling (here it
   abandoned a save-prompt click path; the close still succeeded only because the
   session had no unsaved changes).
+
+### 2026-08-07 (re-run loses -Arguments; BI report-editor screenshot loop)
+
+- `la-run.ps1 -Name x` (re-run without `-File`) does NOT retain the previous
+  run's `-Arguments` — the script got `args.Length == 0` and threw
+  IndexOutOfRangeException at `args[0]`. Always pass `-Arguments` on every
+  invocation (with or without `-File`).
+- First `-File` registration in a session can return EXITCODE -2 (editor
+  cold-started during registration); simply re-invoking the same command
+  succeeds.
+- Verified loop for iterating on a BI report layout: kill the editor process,
+  regenerate definition files on disk, `Start-Process` the project file, then
+  one LA script does wnd.find (150 s timeout for slow first load), fixed
+  ~40 s render wait, optional `w.Elm["BUTTON", "Refresh now", flags:
+  EFFlags.UIA].Find(-3)?.Invoke()` to clear a data-refresh banner, and a
+  `CaptureScreen.Image(w.Rect)` save. Read the PNG, adjust, repeat — each
+  cycle ~2 min.
