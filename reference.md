@@ -257,3 +257,28 @@ Docs referenced but not run here: email (SMTP/IMAP), SFTP/SSH, WMI, services, CO
   EFFlags.UIA].Find(-3)?.Invoke()` to clear a data-refresh banner, and a
   `CaptureScreen.Image(w.Rect)` save. Read the PNG, adjust, repeat — each
   cycle ~2 min.
+
+### 2026-08-31 (driving a BI desktop app through open → data refresh → page walk → save)
+
+- **Wait on the PROJECT title, not the app-name pattern.** During load (and on a
+  failed open) the main window is titled "Untitled - <app>"; once the project loads
+  the title becomes the bare project name with NO app suffix — a `"*<app name>*"`
+  pattern misses it and a process-scoped fallback grabs a dialog instead. Poll for
+  EITHER the project-name window OR the failure dialog (here a NAMED window,
+  "Issues were found") and screenshot whichever appears; the dialog names the
+  offending file/property verbatim — screenshot-and-Read beats guessing from
+  process state.
+- **Data refresh via ribbon element**: `w.Elm["BUTTON", "Refresh"].Find(-3)` +
+  `Invoke()` worked without UIA. The progress dialog is a NAMELESS ~500×380 owned
+  window — poll `wnd.find(-1, null, of: …, also: o => o != main && o.IsVisible &&
+  o.Rect.Width > 250 && o.Rect.Width < 1100)` until gone (~45-60 s here), then
+  screenshot. The same predicate doubles as a post-save error-dialog check.
+- **Page tabs** are findable by their display name with `flags: EFFlags.UIA`;
+  `Invoke()` switches pages. First activation of a page can render longer than a
+  fixed 4 s wait — an all-white screenshot of a data-bound page is NOT proof of
+  missing data; re-capture at ~10 s (or query the app's local engine) before
+  concluding anything.
+- Repeated a KNOWN trap from §2026-07-23 (multi-value `-Arguments` via `pwsh
+  -File` flattening into one garbage string, symptom `DirectoryNotFoundException`
+  naming the joined list) by not re-reading the log — the rule is now promoted
+  into SKILL.md §2 so it sits next to the command it protects.

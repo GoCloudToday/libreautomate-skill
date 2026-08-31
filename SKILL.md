@@ -27,13 +27,18 @@ if absent), then initializes the workspace at `<MyDocuments>\LibreAutomate\Main`
 ## 2. Run automation
 
 ```powershell
-pwsh -File "<skill dir>\scripts\la-run.ps1" -Name my-task -File task.cs -Arguments "a","b" -TimeoutSec 60
+pwsh -File "<skill dir>\scripts\la-run.ps1" -Name my-task -File task.cs -Arguments "one-arg" -TimeoutSec 60
 # or inline:  -Code 'script.writeResult("hi");'   |  re-run existing:  just -Name my-task
 ```
 
 `la-run.ps1` writes the code into the workspace, registers it in `files.xml`, reloads the editor, runs it,
 and prints the script's `script.writeResult()` text plus `EXITCODE: n`
 (0 OK · -1 compile error · -2 not registered · -532462766 runtime exception · -999 timeout).
+
+**`-Arguments` takes ONE value when invoked via `pwsh -File`** — `-Arguments "a","b"` flattens into a
+single garbage string (`-File` command lines get no expression parsing; reference.md §2026-07-23). Pass
+one argument (e.g. a directory) and derive paths in the C#. A first `-File` registration may exit -2
+(editor cold start) — re-invoke the identical command, always re-passing `-File` and `-Arguments`.
 
 **Always use this script shape** — only `script.writeResult` reaches stdout; errors are otherwise invisible:
 
