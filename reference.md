@@ -298,3 +298,18 @@ Docs referenced but not run here: email (SMTP/IMAP), SFTP/SSH, WMI, services, CO
   per state, keep a walk under ~8 screenshots per script and split longer tours.
 - Screenshots 2.5 s after a bookmark click were fully rendered for tables and charts; the FIRST render of a data-bound
   page after a page switch still needs ~10 s (all-white otherwise) — consistent with §2026-08-31.
+
+### 2026-09-15 (sharing the desktop with a working user: activation refusals, blank captures, meeting windows)
+
+- **`w.Activate()` throws `Au.Types.AuWndException: Failed to activate window.` while the user is actively using another
+  app** (foreground lock; `miscInfo.isInputDesktop()` was True and the target was visible, not minimized). Don't retry in
+  a loop — a walk that fights for the foreground stalls (`-999` timeouts) and disturbs the person. Fall back to the
+  no-focus channel: UIA `Invoke()` on the element (worked for a page tab with no `Activate()`), then capture the SCREEN
+  region `CaptureScreen.Image(w.Rect)` — it needs the window in front but not active. `CaptureScreen.Image(w)`
+  (PrintWindow) of the GPU-rendered BI app came back all-white every time (consistent with SKILL §3).
+- **A screen-region capture can land on somebody else's window.** One shot contained a video-call window (with a
+  shared screen) that was on top of the target. Before any walk that captures, enumerate visible windows of the call
+  client without activating anything (`wnd.findAll(of: "ms-teams.exe")`, names + visibility; a meeting shows as a
+  second top-level window titled after the peer) and postpone while a call is up.
+- The runner's `Find(-5)`/no-activation script shape is otherwise unchanged from §2026-09-14; page-tab `Invoke()` still
+  switched pages with the app in the background.
