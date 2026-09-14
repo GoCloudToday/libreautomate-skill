@@ -282,3 +282,19 @@ Docs referenced but not run here: email (SMTP/IMAP), SFTP/SSH, WMI, services, CO
   -File` flattening into one garbage string, symptom `DirectoryNotFoundException`
   naming the joined list) by not re-reading the log — the rule is now promoted
   into SKILL.md §2 so it sits next to the command it protects.
+
+### 2026-09-14 (driving a BI report's bookmark navigator in the desktop app's edit mode)
+
+- **`elm.Find(5)` (positive wait) THROWS `Au.Types.NotFoundException: Not found.`; `Find(-5)` returns null.** A helper
+  that tests `if (e == null)` after a positive-wait Find never sees the null — the script dies at the first optional
+  element. Use negative waits whenever the element is optional.
+- **Buttons inside a BI report canvas in EDIT mode need Ctrl+click.** UIA finds the navigator/action buttons by their
+  label (`w.Elm["BUTTON", "Contracts Started", flags: EFFlags.UIA]`) but `Invoke()` only SELECTS the visual (its
+  Format pane opens); the bookmark is applied with `keys.send("Ctrl*down"); 100.ms(); e.MouseClick(); 100.ms();
+  keys.send("Ctrl*up");` (needs the input desktop). Page tabs (`PAGETAB`) switch with a plain `Invoke()`.
+- **Two -2 exits in a row after registering a new script** → `Au.Editor.exe /reload` explicitly, then re-run with
+  `-Name` + `-File` + `-Arguments`; the third run executed.
+- The runner's `-TimeoutSec` kills the whole walk (`TIMEOUT after 180 s … EXITCODE: -999`) — with 6–9 s render waits
+  per state, keep a walk under ~8 screenshots per script and split longer tours.
+- Screenshots 2.5 s after a bookmark click were fully rendered for tables and charts; the FIRST render of a data-bound
+  page after a page switch still needs ~10 s (all-white otherwise) — consistent with §2026-08-31.
