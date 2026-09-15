@@ -326,3 +326,16 @@ Docs referenced but not run here: email (SMTP/IMAP), SFTP/SSH, WMI, services, CO
 - **The desktop app reopens a project on the page that was active at its last save, not on the first tab.** A shot taken
   "before switching" and labelled as page 1 showed page 2 still rendering. Invoke the tab you want before the first
   capture and name each shot after the tab you invoked.
+
+### 2026-09-15 round 3 (a UIA search that never returned on a busy report view)
+
+- **`Find(-5)` does not bound a UIA search that blocks.** On a BI report view showing a table visual,
+  `w.Elm["BUTTON", "<label>", flags: EFFlags.UIA].Find(-5)` never returned: the runner killed the script at its limit
+  (`TIMEOUT after 150 s (script task killed)`, `EXITCODE: -999`) right after the previous screenshot had been saved.
+- **Workaround that worked first time:** capture `CaptureScreen.Image(w.Rect)`, read the button's pixel position in the
+  PNG (an offset inside `w.Rect`), then click screen coordinates `mouse.click(w.Rect.left + x, w.Rect.top + y)` with Ctrl
+  held (`keys.send("Ctrl*down"); try { … } finally { keys.send("Ctrl*up"); }`). The whole second walk (excluded view,
+  back to the default view, page tab, three screenshots) finished inside the limit. Keep UIA searches for light views and
+  page tabs, and split walks so a hang costs one step — screenshots saved before the kill survive.
+- **After killing a script that presses modifiers, check the key state before handing the desktop back:**
+  `GetAsyncKeyState(0x11) & 0x8000` through `Add-Type` (not down here); a key-up for a key that is not down is harmless.
