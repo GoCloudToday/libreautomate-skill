@@ -313,3 +313,16 @@ Docs referenced but not run here: email (SMTP/IMAP), SFTP/SSH, WMI, services, CO
   second top-level window titled after the peer) and postpone while a call is up.
 - The runner's `Find(-5)`/no-activation script shape is otherwise unchanged from §2026-09-14; page-tab `Invoke()` still
   switched pages with the app in the background.
+
+### 2026-09-15 round 2 (capturing a background GPU app without activation; tab enumeration; the page an app reopens on)
+
+- **`w.ZorderTopmost()` → `CaptureScreen.Image(w.Rect)` → `w.ZorderNoTopmost()` captures a GPU-rendered BI desktop window
+  from the background with no `Activate()`, no keyboard and no mouse.** Without it (the script editor in front) the same
+  region capture came back all-black; with the target topmost for the shot, both report pages rendered completely (page
+  tabs switched with UIA `Invoke()`, 20–25 s render wait each). Restore the z-order in a `finally`.
+- **`w.Elm["PAGETAB", null, flags: EFFlags.UIA].FindAll()` returned nothing while
+  `w.Elm["PAGETAB", "<tab name>", flags: EFFlags.UIA].Find(10)` found the tab.** Address tabs by name, or enumerate with
+  `w.Elm[null, null, flags: EFFlags.UIA].FindAll()` and filter on `Role`.
+- **The desktop app reopens a project on the page that was active at its last save, not on the first tab.** A shot taken
+  "before switching" and labelled as page 1 showed page 2 still rendering. Invoke the tab you want before the first
+  capture and name each shot after the tab you invoked.

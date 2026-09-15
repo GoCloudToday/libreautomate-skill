@@ -57,7 +57,7 @@ try {
 ```csharp
 // 1. Screenshots (then Read the PNG):
 CaptureScreen.Image(w).Save(args[0], System.Drawing.Imaging.ImageFormat.Png);
-// blank image? GPU-rendered app → capture screen region CaptureScreen.Image(w.Rect) with w foreground;
+// blank image? GPU-rendered app → capture screen region CaptureScreen.Image(w.Rect) with w in front (w.ZorderTopmost() gets it there without activation; restore with ZorderNoTopmost());
 // can't bring it forward? use channel 2 — elements need no visibility at all:
 // 2. UI elements:
 foreach (var e in w.Elm.FindAll()) print.it(e.Role, e.Name, e.Rect);            // learn an app's UI
