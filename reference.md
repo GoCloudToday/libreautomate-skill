@@ -371,3 +371,16 @@ look again). Findings, all measured:
 - **UIA over a BI canvas is thin.** A full `BUTTON` enumeration of the app returned six elements (ribbon and pane
   chrome), none of the report content, so pane and ribbon toggles are addressable by name while everything drawn on
   the canvas is not: for the canvas, read the PNG and click coordinates.
+
+#### 2026-09-21 round 2 (a step runner that survives the lock, and reading colours instead of looking at them)
+
+- **Guard the runner with `miscInfo.isInputDesktop()` and return early.** A plan whose first act is `w.Activate()`
+  throws the moment the session locks, and `la-run.ps1` still prints `EXITCODE: 0` with only a stack trace above
+  it - easy to misread as "the app is gone". One line (`if (!miscInfo.isInputDesktop()) { script.writeResult(
+  "LOCKED: ..."); return; }`) turns a stack trace into an answer. A short idle timeout can lock the machine twice
+  inside one long observe/act loop, so re-check it every round rather than once at the start.
+- **Do not judge a colour by looking at a screenshot: sample it.** Reading a PNG back with `System.Drawing` and
+  reporting the darkest pixel of a cell rectangle as hex (plus the modal pixel for its background) settled in one
+  call what several magnified crops could not - two greys and a dark blue at 9 pt are indistinguishable by eye,
+  and a selection highlight dims a whole visual, which looks exactly like a colour that failed to apply.
+  Clear the selection before sampling.
