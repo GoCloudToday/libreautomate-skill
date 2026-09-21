@@ -339,3 +339,35 @@ Docs referenced but not run here: email (SMTP/IMAP), SFTP/SSH, WMI, services, CO
   page tabs, and split walks so a hang costs one step — screenshots saved before the kill survive.
 - **After killing a script that presses modifiers, check the key state before handing the desktop back:**
   `GetAsyncKeyState(0x11) & 0x8000` through `Add-Type` (not down here); a key-up for a key that is not down is harmless.
+
+### 2026-09-21 (a long screenshot-and-fix loop on one GPU desktop app: what makes it cheap, and what a locked session does)
+
+Twenty-odd observe/act rounds against a BI desktop app (render a page, read the PNG, edit the generator, rebuild,
+look again). Findings, all measured:
+
+- **A step interpreter beats one script per action.** One registered script that reads `plan.txt` from its argument
+  directory and executes `click x y`, `ctrlclick x y`, `move`, `sleep ms`, `key <keys>`, `text <text>`,
+  `shot <name>`, `crop <name> x y w h [scale]` turns each round into "write plan, re-run by `-Name` only". After the
+  first registration `la-run.ps1 -Name <name> -Arguments <dir>` needs no `-File`, so a round costs one short call.
+  `crop` with an integer nearest-neighbour upscale is what makes 8 pt UI text legible in a read-back PNG.
+- **`screen.primary.Rect` is read fresh each run and it can CHANGE between runs.** The same capture command
+  produced 1366x768 PNGs and then a 1920x1080 one after the display mode changed underneath the session. Never
+  reuse coordinates read from an older screenshot without confirming the current screen size in the same run;
+  `mouse.*` and `CaptureScreen` agree with each other, so coordinates read from a shot taken in THAT run are safe.
+- **`CaptureScreen.Image(w)` on a GPU-rendered window is a ~5 KB all-white PNG while
+  `CaptureScreen.Image(screen.primary.Rect)` of the same moment is a full 120 KB screenshot.** For a maximized
+  window prefer the screen rect: `w.Rect` of a maximized window carries the 8 px overhang (`L=-8 T=-8`) and is not
+  the capture rectangle you want.
+- **A locked session breaks the screenshot channel completely:** `CaptureScreen` returns an all-black bitmap of the
+  right size (it does not throw), and the first `w.Activate()` in the script throws, so a plan that starts with an
+  activate dies at line 1. `Get-Process LogonUI` was the reliable signal here. Treat an all-black capture as "locked",
+  not as "app not rendering", and move verification that must survive a lock to a non-UI channel (for a BI app, DAX
+  or DMV queries over its engine port keep working while the screen is black).
+- **Runner exit codes seen while iterating:** `-2` on the very first registration of a new script (re-invoke the
+  identical command, it registers the second time), `-1` for a C# compile error — including a wrong overload such as
+  `w.Elm.FindAll("BUTTON", null, flags: EFFlags.UIA)`; the compiling form is
+  `w.Elm["BUTTON", flags: EFFlags.UIA].FindAll()`. Both print nothing else, so keep a known-good script around to
+  tell "runner broken" from "my code broken".
+- **UIA over a BI canvas is thin.** A full `BUTTON` enumeration of the app returned six elements (ribbon and pane
+  chrome), none of the report content, so pane and ribbon toggles are addressable by name while everything drawn on
+  the canvas is not: for the canvas, read the PNG and click coordinates.

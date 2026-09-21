@@ -78,8 +78,10 @@ w.Activate(); 300.ms(); keys.send("Ctrl+S");     // keyboard needs active deskto
 
 Before keyboard/mouse/activation, check `miscInfo.isInputDesktop()`. When it's false (machine locked,
 RDP disconnected, UAC prompt showing), `keys.*`/`mouse.*`/`Activate`/`clipboard.copy|paste` throw —
-but window management, all `elm` reads and `Invoke`/`Check`/`ComboSelect`, window screenshots, raw
-clipboard, and browser element automation still work. Full matrix + the PiP-session workaround: recipes.md §7.
+but window management, all `elm` reads and `Invoke`/`Check`/`ComboSelect`, raw clipboard and browser
+element automation still work. Screenshots do NOT: on a locked session `CaptureScreen` returns an all-black
+bitmap of the right size instead of throwing, so read all-black as "locked", not as "app not rendering", and
+verify through a non-UI channel until it is unlocked. Full matrix + the PiP-session workaround: recipes.md §7.
 
 ## 5. Discover any API on demand (offline, no network)
 
