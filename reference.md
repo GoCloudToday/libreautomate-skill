@@ -384,3 +384,16 @@ look again). Findings, all measured:
   call what several magnified crops could not - two greys and a dark blue at 9 pt are indistinguishable by eye,
   and a selection highlight dims a whole visual, which looks exactly like a colour that failed to apply.
   Clear the selection before sampling.
+
+### 2026-09-26 (reading a BI desktop app's load error without a screenshot; what an invoked page tab leaves behind)
+
+- **The app's "Something went wrong" card is readable verbatim through UIA, no screenshot and no focus.** Loop
+  over `wnd.findAll(null, null, "<app>.exe")`, skip invisible windows, and filter
+  `w.Elm[null, null, flags: EFFlags.UIA].FindAll()` by `Name`: the card showed up under the maximized main window
+  as `GROUPING: Something went wrong` plus `STATICTEXT` lines carrying the message (`Failed to load the report.`,
+  and on one build `Some security filter expressions have errors.`). That made a load test scriptable - build a
+  variant, open it, poll for the card or for the loaded state, record the text, close - and it bisected which part
+  of a generated report the app refused, one variant per run, without anyone watching the screen.
+- **After `PAGETAB` `Invoke()` the tab's tooltip (the page name) stays on screen and lands in the capture.** Every
+  one of 12 captures, taken 20 s after the invoke, showed it over the bottom strip of the canvas, covering what the
+  page draws there. Don't read it as page content: crop above it, or check that strip through another channel.
