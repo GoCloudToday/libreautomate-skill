@@ -397,3 +397,14 @@ look again). Findings, all measured:
 - **After `PAGETAB` `Invoke()` the tab's tooltip (the page name) stays on screen and lands in the capture.** Every
   one of 12 captures, taken 20 s after the invoke, showed it over the bottom strip of the canvas, covering what the
   page draws there. Don't read it as page content: crop above it, or check that strip through another channel.
+
+### 2026-09-27 (driving a BI app's refresh dialogs: classify by buttons, and survive vanishing windows)
+
+- **The refresh PROGRESS dialog's titlebar X is a BUTTON named "Close", the same name as the ERROR dialog's real
+  Close button.** A script that treated "has a Close button" as "error dialog" clicked the X three seconds in and
+  CANCELED the refresh it was watching, twice in a row. Classify by what is unique: the progress dialog carries a
+  "Cancel" push button (keep waiting), the error dialog carries a Close push button plus text like "blocked by
+  the following errors" (close it, report failure). Check Cancel FIRST.
+- **A dialog can close between `wnd.find` returning it and the first `Elm` read on it** - the read then throws
+  `Au.Types.AuWndException: Failed. Invalid window handle.` and kills the script. Wrap the per-dialog inspection
+  in try/catch on that exception and treat it as "the dialog moved on", never as a failure.
