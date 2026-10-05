@@ -396,7 +396,8 @@ look again). Findings, all measured:
   of a generated report the app refused, one variant per run, without anyone watching the screen.
 - **After `PAGETAB` `Invoke()` the tab's tooltip (the page name) stays on screen and lands in the capture.** Every
   one of 12 captures, taken 20 s after the invoke, showed it over the bottom strip of the canvas, covering what the
-  page draws there. Don't read it as page content: crop above it, or check that strip through another channel.
+  page draws there. Don't read it as page content. Fixed 2026-10-06 by moving the keyboard focus away before the
+  shot (see that entry).
 
 ### 2026-09-27 (driving a BI app's refresh dialogs: classify by buttons, and survive vanishing windows)
 
@@ -408,3 +409,22 @@ look again). Findings, all measured:
 - **A dialog can close between `wnd.find` returning it and the first `Elm` read on it** - the read then throws
   `Au.Types.AuWndException: Failed. Invalid window handle.` and kills the script. Wrap the per-dialog inspection
   in try/catch on that exception and treat it as "the dialog moved on", never as a failure.
+### 2026-10-06 (auditing every page of a BI desktop app by screenshot: hidden pages, the tab tooltip, hover marks)
+
+- **A hidden report page's tab is named "Hidden <page name>" in UIA**, not "<page name>": a raw UIA walk listed
+  `TabItem | Hidden Total ... verticals` next to the plain names of the visible pages. A script that searched
+  `Elm["PAGETAB", "<page name>"]` found the visible pages and threw `NotFoundException` on the hidden one (from the
+  positive-timeout `Find(5)` fallback), so three runs in a row saved no shot of that page while still exiting 0
+  overall. Match with a wildcard, `Elm["PAGETAB", "*" + name]`, which takes both spellings and still does not catch
+  a longer sibling name (the pattern must END with the name). Use a negative timeout on fallbacks
+  (`Find(-5)`) so a miss is reported in the result text instead of killing the remaining pages.
+- **The page-tab tooltip goes away when the keyboard focus moves elsewhere.** After the tab `Invoke()` and the
+  render wait, `w.Elm["PAGETAB", "Home", flags: EFFlags.UIA].Find(-1)?.Focus()` (the ribbon's first tab, already
+  selected) plus 1 s removed the tooltip from every following capture; the only trace is a focus rectangle around
+  that ribbon tab, outside the canvas. No keyboard, no mouse, works without activating the window.
+- **A pointer resting over the window leaves hover marks in the captures**: one shot had the field list's tooltip
+  over the top right of the canvas, the next had a visual's header icons (filter, focus, more options) drawn over
+  the selected tab of a tab-strip visual, hiding its label. Both came from wherever the pointer happened to rest.
+  Guard added since (not yet seen in action): if `mouse.xy` is inside `w.Rect`, `mouse.move(w, .5f, ^10,
+  nonClient: true)` parks it on the status bar for the shots and puts it back afterwards; a pointer outside the
+  window is left alone.
