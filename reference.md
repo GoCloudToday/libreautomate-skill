@@ -428,3 +428,15 @@ look again). Findings, all measured:
   Guard added since (not yet seen in action): if `mouse.xy` is inside `w.Rect`, `mouse.move(w, .5f, ^10,
   nonClient: true)` parks it on the status bar for the shots and puts it back afterwards; a pointer outside the
   window is left alone.
+
+### 2026-10-15 (a session lock changed the display, and the next screenshots shrank)
+
+- **After the user locked and unlocked the machine, the display came back smaller and the app reopened restored, not
+  maximized.** Earlier captures of the same BI desktop app were 1936x1048 window shots with the report page at 116 %
+  zoom; the first run after the lock produced 1040x736 shots (`System.Windows.Forms.Screen` now reported 1398x824)
+  with the page at 46 %, legible to nobody. The captures were not black, so nothing failed: only reading them showed
+  it. The app reopens at its last window size, so any capture script should maximize first:
+  `if (!w.IsMaximized) { w.ShowMaximized(1); 3000.ms(); }` (1 = `SetWindowPlacement`, no animation; window
+  management works without the input desktop). The next run shot 1414x792 at 75 %, readable again.
+- Check the size of each new capture against the last good one (or the window rect against the screen) before
+  reading content off it; a different size is the cheap signal that the display or the window state changed.
