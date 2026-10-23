@@ -440,3 +440,18 @@ look again). Findings, all measured:
   management works without the input desktop). The next run shot 1414x792 at 75 %, readable again.
 - Check the size of each new capture against the last good one (or the window rect against the screen) before
   reading content off it; a different size is the cheap signal that the display or the window state changed.
+
+### 2026-10-23 (selecting items inside a BI app's web canvas: no-break spaces in element names, a dialog that never closed)
+
+- **Element names inside the report canvas use no-break spaces (U+00A0) between words.** `w.Elm["LISTITEM", "Two Words"]`
+  and `"Two Words*"` found nothing, while a pattern whose first word holds no space (`"Contoso*"`) matched, which looked
+  intermittent for a while. A plain enumeration printed the same names with what looked like ordinary spaces. Enumerate
+  (`Elm["LISTITEM", null, flags: EFFlags.UIA].FindAll()`) and compare `e.Name.Replace(' ', ' ')`. Table row header
+  cells come as LISTITEMs about one column wide; the whole row is a second LISTITEM with every cell's text joined.
+- **`e.MouseClick()` on a table row header cell selects that line** (the visuals it filters update), and on a button
+  slicer's BUTTON picks it; park the pointer on the status bar before the capture (`mouse.move(w, .5f, ^10, nonClient:
+  true)`) so no hover marks show.
+- **A modal "Working on it" window can stay up for good.** After a refresh started outside the app (over its engine
+  port) and then the app's own Refresh button, a small 520 x 92 window of the app stayed visible for minutes with the
+  engine idle; every screenshot carried it. Before capturing, count the app's other visible windows and wait for 0
+  twice in a row; start the app's own refresh only, not both.
