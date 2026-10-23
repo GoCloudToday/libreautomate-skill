@@ -455,3 +455,27 @@ look again). Findings, all measured:
   port) and then the app's own Refresh button, a small 520 x 92 window of the app stayed visible for minutes with the
   engine idle; every screenshot carried it. Before capturing, count the app's other visible windows and wait for 0
   twice in a row; start the app's own refresh only, not both.
+
+### 2026-10-23 round 2 (an editor window over the user's apps, a compile error with no text, a dead web canvas)
+
+- **Registering a new script can bring the editor window to the front.** `la-run.ps1` with a new `-Name` writes
+  `files.xml` and sends `/reload`; twice in one evening the editor window then sat on top of the user's own apps (seen
+  on a full screen capture). A script that works in another app's window should remember `wnd.active` first, minimize
+  the editor (`wnd.find(-1, "LibreAutomate", null, "Au.Editor.exe").ShowMinimized(1)`), and give the foreground back
+  with `prev.Activate()` at the end. `w.Activate()` brought the target app from behind the editor within a second
+  (`wnd.active == w` checked before any click).
+- **`EXITCODE: -1` is a compile error whose text appears only in the editor's Output pane.** The runner prints nothing
+  else; a capture of the Output pane showed `error CS1061: 'wnd' does not contain a definition for 'ProcessName'`.
+  The program of a window is `wnd.ProgramName` (`"Au.Editor.exe"`, `"Code.exe"`).
+- **Through `pwsh -File`, `-Arguments a, b` delivers only `a`.** `pwsh -File` hands the runner plain strings, so
+  `-Arguments` binds the first value and the second binds to the next free positional parameter. Without `-Code` or
+  `-File` that is `-Code`: the runner OVERWROTE the stored script with the text of the second argument (`error CS1012:
+  Too many characters in character literal` at (1,1), `EXITCODE: -1`); with `-File` given, the value was dropped and
+  the script ran with its default for `args[1]`; with `-Code` given it hit `-TimeoutSec` ("Cannot convert value ... to
+  type System.Int32"). Called in process (`& $la -Arguments @('first value', 'second')`) both arrived (`2: first
+  value|second`). Pass several arguments in process, or as one joined string split inside the script.
+- **When an embedded web canvas dies, every capture of the window is black.** The host app showed only a black window
+  with a small error dialog about its web view; `CaptureScreen.Image(w.Rect)` returned a black image (31 of 600
+  sampled pixels not black: the dialog), the UI Automation tree held only the shell (26 elements) and element finds
+  timed out, while `CaptureScreen.Image(screen.primary.Rect)` was fine. Sample a capture for black pixels before
+  trusting it, and on a black one capture the screen to read the window's state instead of retrying the window.

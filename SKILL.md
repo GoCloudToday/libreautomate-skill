@@ -37,8 +37,13 @@ and prints the script's `script.writeResult()` text plus `EXITCODE: n`
 
 **`-Arguments` takes ONE value when invoked via `pwsh -File`** — `-Arguments "a","b"` flattens into a
 single garbage string (`-File` command lines get no expression parsing; reference.md §2026-07-23). Pass
-one argument (e.g. a directory) and derive paths in the C#. A first `-File` registration may exit -2
-(editor cold start) — re-invoke the identical command, always re-passing `-File` and `-Arguments`.
+one argument (e.g. a directory) and derive paths in the C#. From a PowerShell caller `-Arguments $a, 'b'` reaches
+pwsh as two tokens instead: the second binds to the next free parameter, and without `-File`/`-Code` that is `-Code`,
+which OVERWRITES the stored script with it (compile error at (1,1)). In process (`& $la ... -Arguments @(a, b)`)
+arrays bind correctly. A first `-File` registration may exit -2
+(editor cold start) — re-invoke the identical command, always re-passing `-File` and `-Arguments`. A `-1` prints no
+error text: read it in the editor's Output pane. Registering a new script can raise the editor over the user's
+windows: minimize it and give the foreground back (reference.md §2026-10-23 round 2).
 
 **Always use this script shape** — only `script.writeResult` reaches stdout; errors are otherwise invisible:
 
@@ -80,7 +85,8 @@ Before keyboard/mouse/activation, check `miscInfo.isInputDesktop()`. When it's f
 RDP disconnected, UAC prompt showing), `keys.*`/`mouse.*`/`Activate`/`clipboard.copy|paste` throw —
 but window management, all `elm` reads and `Invoke`/`Check`/`ComboSelect`, raw clipboard and browser
 element automation still work. Screenshots do NOT: on a locked session `CaptureScreen` returns an all-black
-bitmap of the right size instead of throwing, so read all-black as "locked", not as "app not rendering", and
+bitmap of the right size instead of throwing, so read all-black as "locked", not as "app not rendering" (but a black
+WINDOW capture on an unlocked session can be an embedded web view that died: capture the whole screen), and
 verify through a non-UI channel until it is unlocked. Full matrix + the PiP-session workaround: recipes.md §7.
 
 ## 5. Discover any API on demand (offline, no network)
