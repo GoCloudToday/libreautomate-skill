@@ -479,3 +479,24 @@ look again). Findings, all measured:
   sampled pixels not black: the dialog), the UI Automation tree held only the shell (26 elements) and element finds
   timed out, while `CaptureScreen.Image(screen.primary.Rect)` was fine. Sample a capture for black pixels before
   trusting it, and on a black one capture the screen to read the window's state instead of retrying the window.
+
+### 2026-10-27 (driving a cloud BI portal in a browser, and a desktop BI app's publish dialogs)
+
+- **Edge window titles hold a zero-width space: "Microsoft\u200B Edge".** `wnd.wait(30, false, "*Microsoft Edge*",
+  "Chrome_WidgetWin_1")` timed out on a window titled "Sign in to your account - Work - Microsoft​ Edge" (U+200B
+  between the two words). Match `"*Edge*"` plus the class and `of: "msedge.exe"`, or enumerate the program's windows.
+- **Check which browser profile holds the session before driving a web app.** The same portal URL opened in Edge's
+  "Work" profile on an account picker; picking the work account marked "Connected to Windows" then asked for the email
+  (no single sign-on), while Chrome's default profile opened it signed in. Never type credentials; on a sign-in page,
+  close the window you opened and try the profile that has the session. Read the signed-in account from the portal's
+  account panel before acting.
+- **In a React dialog, `Invoke()` on a button can do nothing.** "Create" in a portal's new-item dialog stayed open
+  after `elm.Invoke()` (no error, no request); `MouseClick()` on the visible button submitted it. Several elements can
+  share a button name (a hidden copy elsewhere): pick the one whose rectangle is non-empty and near the dialog's field.
+- **Element dumps of a single-page app are huge.** A portal page returned hundreds of STATICTEXT nodes (every card
+  description of a "new item" gallery). Dump only buttons, links, tabs, edits and list items, skip zero-size
+  rectangles, and filter by a name substring per step.
+- **A desktop app's modal dialogs are often separate top-level windows with complete UI Automation trees**, even when
+  its main canvas (a web view) exposes almost nothing: find them with `wnd.findAll(null, null, "<app>.exe")`, identify
+  each by a STATICTEXT inside (`also: o => o.Elm["STATICTEXT", "<title text>", flags: EFFlags.UIA].Exists()`), act by
+  BUTTON name, and poll for the next window's text instead of sleeping a fixed time.
