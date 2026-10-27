@@ -500,3 +500,20 @@ look again). Findings, all measured:
   its main canvas (a web view) exposes almost nothing: find them with `wnd.findAll(null, null, "<app>.exe")`, identify
   each by a STATICTEXT inside (`also: o => o.Elm["STATICTEXT", "<title text>", flags: EFFlags.UIA].Exists()`), act by
   BUTTON name, and poll for the next window's text instead of sleeping a fixed time.
+
+### 2026-10-27 round 2 (a portal's share dialog, a low-code portal's connections)
+
+- **Escape closes the whole dialog, not just a suggestion list.** In a portal's "Grant people access" dialog, `Esc`
+  pressed to close the people picker's suggestions closed the dialog and dropped the picked group. Clear a field with
+  `Ctrl+A` + `Delete` and click elsewhere instead.
+- **A people picker shows "You can't use invalid or duplicate emails"** when the same name is typed again after it
+  was picked (the picked entry sits above the box as a ROW with a "Remove" button). Read the picked ROWs before typing.
+- **Check every checkbox state before the final click, by name**: a share dialog had "Notify recipients by email"
+  ticked by default (for a large group that is a mail to hundreds of people); untick it, tick the one permission
+  wanted, then re-read all of them right before "Grant". The primary button's accessible name can be its tooltip
+  ("... permission required to do the share.") rather than its caption: pick it as the one non-Back, non-Close button.
+- **A Chromium tab's accessibility tree can come back empty** (no BUTTONs at all, `Find` timing out) after a sign-in
+  popup of that tab closed. Closing the window and opening the page in a new window restored it at once.
+- **Fluent UI dropdowns render their options as LISTITEMs in a separate layer**: open the COMBOBOX with a click, then
+  find the option by exact name anywhere in the page (not under the combobox), click it, and re-read the combobox
+  Value to confirm.
