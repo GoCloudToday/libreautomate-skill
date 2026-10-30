@@ -208,6 +208,8 @@ Check first: `miscInfo.isInputDesktop()` — false when workstation locked, RDP 
 | `clipboard.text` get/set, `clipboardData` | `clipboard.copy()`/`paste()` (send Ctrl+C/V) |
 | files/HTTP/SQLite/processes/console, browser elm automation | `keys.send`, all `mouse.*` |
 
+**Locked workstation (lock screen up, not a disconnected RDP), measured 2026-10-30:** an Invoke on a ribbon button still worked, but in the modal dialogs it opened (a desktop BI tool's publish dialogs) every wnd.findAll + Elm[...] search hung until the 60 s script timeout, round after round; wnd.Activate threw "the main input desktop is inactive" and screenshots failed. Do not plan modal-dialog automation for a session that may lock: check miscInfo.isInputDesktop() first and keep an API path (the BI tool's REST publish) as the fallback.
+
 Text input into foreign apps headless: no keys available — use `elm` actions, `w.SetText` (WM_SETTEXT,
 classic Edit controls), app CLIs, or file/clipboard handoffs. Or LibreAutomate **PiP session** *(docs)*:
 a child session where scripts get their own desktop while the user works — `Au.Editor.exe /pip`,
